@@ -1,4 +1,4 @@
-package com.example.weatherapp.ui.components.autocomplete
+package com.example.weatherapp.ui.custom.autocomplete
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -29,7 +29,8 @@ fun <T : AutoCompleteEntity> AutoCompleteBox(
 
     Column(
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
     ) {
         autoCompleteState.content()
         AnimatedVisibility(visible = autoCompleteState.isSearching) {

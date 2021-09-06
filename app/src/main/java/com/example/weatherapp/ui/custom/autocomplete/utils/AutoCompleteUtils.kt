@@ -1,6 +1,6 @@
-package com.example.weatherapp.ui.components.autocomplete.utils
+package com.example.weatherapp.ui.custom.autocomplete.utils
 
-import com.example.weatherapp.ui.components.autocomplete.ValueAutoCompleteEntity
+import com.example.weatherapp.ui.custom.autocomplete.ValueAutoCompleteEntity
 
 typealias CustomFilter<T> = (T, String) -> Boolean
 

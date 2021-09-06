@@ -1,4 +1,4 @@
-package com.example.weatherapp.ui.components.autocomplete
+package com.example.weatherapp.ui.custom.autocomplete
 
 import androidx.compose.runtime.Stable
 

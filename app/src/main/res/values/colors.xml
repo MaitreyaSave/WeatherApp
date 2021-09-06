@@ -10,6 +10,7 @@
 
 
 <!-- Custom colors for weather app -->
-    <color name="primary_blue">#FF2F3E9E</color>
+    <color name="primary_blue">#FF3E50B4</color>
+    <color name="primaryDark_blue">#FF2F3E9E</color>
 
 </resources>

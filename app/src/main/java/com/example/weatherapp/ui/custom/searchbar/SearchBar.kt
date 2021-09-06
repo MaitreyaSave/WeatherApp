@@ -1,4 +1,4 @@
-package com.example.weatherapp.ui.components
+package com.example.weatherapp.ui.custom
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
@@ -25,7 +25,7 @@ fun TextSearchBar(
 ) {
     OutlinedTextField(
         modifier = modifier
-            .fillMaxWidth(.9f)
+            .fillMaxWidth(.97f)
             .onFocusChanged { onFocusChanged(it) },
         value = value,
         onValueChange = { query ->

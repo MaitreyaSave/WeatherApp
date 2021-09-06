@@ -8,4 +8,5 @@ val Purple700 = Color(0xFF3700B3)
 val Teal200 = Color(0xFF03DAC5)
 
 // Custom colors for weather app
-val PrimaryBlue = Color(0xFF2F3E9E)
+val PrimaryDarkBlue = Color(0xFF2F3E9E)
+val PrimaryBlue = Color(0xFF3E50B4)

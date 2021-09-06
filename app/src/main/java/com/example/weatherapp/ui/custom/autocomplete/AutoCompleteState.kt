@@ -1,4 +1,4 @@
-package com.example.weatherapp.ui.components.autocomplete
+package com.example.weatherapp.ui.custom.autocomplete
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -39,7 +39,7 @@ class AutoCompleteState<T : AutoCompleteEntity>(private val startItems: List<T>)
 
     var filteredItems by mutableStateOf(startItems)
     override var isSearching by mutableStateOf(false)
-    override var boxWidthPercentage by mutableStateOf(.9f)
+    override var boxWidthPercentage by mutableStateOf(.99f)
     override var shouldWrapContentHeight by mutableStateOf(false)
     override var boxMaxHeight: Dp by mutableStateOf(TextFieldDefaults.MinHeight * 3)
     override var boxBorderStroke by mutableStateOf(BorderStroke(2.dp, Color.Black))
