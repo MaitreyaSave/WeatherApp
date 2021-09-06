@@ -13,4 +13,7 @@
     <color name="primary_blue">#FF3E50B4</color>
     <color name="primaryDark_blue">#FF2F3E9E</color>
 
+    <color name="backgroundGrey">#FFDADADA</color>
+    <color name="cardBackgroundWhite">#FFFAFAFA</color>
+
 </resources>
