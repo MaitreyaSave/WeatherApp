@@ -21,9 +21,6 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
-import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.items
 import coil.annotation.ExperimentalCoilApi
 import coil.compose.rememberImagePainter
 import com.example.weatherapp.R
@@ -54,11 +51,10 @@ class MainActivity : ComponentActivity() {
         const val openWeatherApiKey = "7fbefd178fabde87e956d38990bbad5f"
         const val newsApiKey = "0a1812ad68784e2f838d854a52580e4a"
         const val iconBaseURL = "https://openweathermap.org/img/w/"
+        private val TAG = MainActivity::class.java.simpleName
     }
 
-//    private val mainViewModel = MainViewModel()
     lateinit var mainViewModel: MainViewModel
-
 
     @ExperimentalCoilApi
     @ExperimentalAnimationApi
@@ -67,8 +63,7 @@ class MainActivity : ComponentActivity() {
         setupViewModel()
         setContent {
             WeatherAppTheme {
-                val itemsList = (0..5).toList()
-                val lazyArticleItems: LazyPagingItems<Article> = mainViewModel.articleListData.collectAsLazyPagingItems()
+//                val lazyArticleItems: LazyPagingItems<Article> = mainViewModel.articleListData.collectAsLazyPagingItems()
 
                 val dummySource = Source(
                     id = "1",
@@ -182,7 +177,6 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
 
-                                //
                                 // Static Text
                                 Text(
                                     text = "News Highlights",
@@ -196,17 +190,8 @@ class MainActivity : ComponentActivity() {
                         }
 
                         // Recycler view of news
-
-                        item{
-//                           NewsArticleCard(article = null)
-                        }
-
-
-                        items(lazyArticleItems){ article ->
-                            NewsArticleCard(article = article!!)
-                        }
-//                        item{
-//                            NewsArticleCard(article = dummyArticle)
+//                        items(lazyArticleItems){ article ->
+//                            NewsArticleCard(article = article!!)
 //                        }
                         items(mainViewModel.articleList){ article ->
                             NewsArticleCard(article = article)
@@ -278,7 +263,6 @@ class MainActivity : ComponentActivity() {
 
     }
 
-
     private fun capitalizeCityName(oldName: String): String {
         val words = oldName.split(" ")
         val stringBuilder = StringBuilder()
@@ -294,10 +278,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private suspend fun searchOnClick() = coroutineScope{
-        //
-//        mainViewModel.updatePager()
-//        Log.d("ttt","pages: ${mainViewModel.articleListData}")
-        //
+
         val apiService = OpenWeatherAPIService.getOpenWeatherAPIService()
         val call: Call<OpenWeatherApiResponse> = apiService.getCityCurrentWeatherData(mainViewModel.query, openWeatherApiKey)
         val forecastCall: Call<ForecastResponse> = apiService.getCityForecastData(mainViewModel.query, openWeatherApiKey)
@@ -310,20 +291,23 @@ class MainActivity : ComponentActivity() {
                 val statusCode = response.code()
                 if (statusCode == 404) {
                     Log.d("ttt", "City not found")
-                } else{
-                    // no-op
+                } else if (statusCode == 200){
+                    val cityForecastResponse: ForecastResponse? = response.body()
+                    if (cityForecastResponse != null) {
+                        mapForecastResponseToViewModel(cityForecastResponse)
+                    }
                 }
-                val cityForecastResponse: ForecastResponse? = response.body()
-                if (cityForecastResponse != null) {
-                    mapForecastResponseToViewModel(cityForecastResponse)
+                else{
+                    Log.d(TAG, "Unknown status code: $statusCode")
                 }
+
             }
             override fun onFailure(
                 call: Call<ForecastResponse?>,
                 t: Throwable
             ) {
-                // Log error here since request failed
-                Log.d("ttt", "Failed $t")
+                // Log error since request failed
+                Log.d(TAG, "Failed $t")
             }
         })
 
@@ -334,22 +318,23 @@ class MainActivity : ComponentActivity() {
             ) {
                 val statusCode = response.code()
                 if (statusCode == 404) {
-                    Log.d("ttt", "City not found")
                     Toast.makeText(baseContext, "Invalid City", Toast.LENGTH_SHORT).show()
-                } else{
-                    // no-op
+                } else if (statusCode == 200){
+                    val cityWeatherResponse: OpenWeatherApiResponse? = response.body()
+                    if (cityWeatherResponse != null) {
+                        mapWeatherResponseToViewModel(cityWeatherResponse)
+                    }
                 }
-                val cityWeatherResponse: OpenWeatherApiResponse? = response.body()
-                if (cityWeatherResponse != null) {
-                    mapWeatherResponseToViewModel(cityWeatherResponse)
+                else{
+                    Log.d(TAG, "Unknown status code: $statusCode")
                 }
             }
             override fun onFailure(
                 call: Call<OpenWeatherApiResponse?>,
                 t: Throwable
             ) {
-                // Log error here since request failed
-                Log.d("ttt", "Failed $t")
+                // Log error since request failed
+                Log.d(TAG, "Failed $t")
             }
         })
 
@@ -365,28 +350,31 @@ class MainActivity : ComponentActivity() {
             ) {
                 val statusCode = response.code()
                 if (statusCode == 404) {
-                    Log.d("ttt", "City not found")
-                } else{
-                    // no-op
+                    Toast.makeText(baseContext, "News not found!!!", Toast.LENGTH_SHORT).show()
+
+                } else if (statusCode == 200){
+                    val newsResponse: NewsAPiResponse? = response.body()
+                    if (newsResponse != null) {
+                        mapNewsResponseToViewModel(newsResponse)
+                    }
                 }
-                val newsResponse: NewsAPiResponse? = response.body()
-                if (newsResponse != null) {
-                    mapNewsResponseToViewModel(newsResponse)
+                else{
+                    Log.d(TAG, "Unknown status code: $statusCode")
                 }
             }
             override fun onFailure(
                 call: Call<NewsAPiResponse?>,
                 t: Throwable
             ) {
-                // Log error here since request failed
-                Log.d("ttt", "Failed $t")
+                // Log error since request failed
+                Log.d(TAG, "Failed $t")
             }
         })
     }
     
     private fun mapWeatherResponseToViewModel(response: OpenWeatherApiResponse){
         val currentWeather = response.weather[0]
-//        Log.d("ttt", "res: ${currentWeather.description}")
+
         mainViewModel.cityName.value = capitalizeCityName(mainViewModel.query)
         mainViewModel.iconURL.value = iconBaseURL+currentWeather.icon+".png"
 
@@ -406,13 +394,13 @@ class MainActivity : ComponentActivity() {
             // Get information after every 24 hours (step of 3 hours * 8)
             val pos = i*jumpMultiplier - 1
             val iconURL = iconBaseURL + allForecastList[pos].weather[0].icon + ".png"
+
+            // Convert temperatures to Celsius before updating
             val minTemp = convertKelvinToCelsiusString(allForecastList[pos].main.temp_min)
             val maxTemp = convertKelvinToCelsiusString(allForecastList[pos].main.temp_max)
 
             mainViewModel.dayList.add(NextDayWeather(iconURL, minTemp, maxTemp))
         }
-        Log.d("ttt", "res: ${mainViewModel.dayList.size}")
-
     }
 
     private fun mapNewsResponseToViewModel(response: NewsAPiResponse){
@@ -434,7 +422,5 @@ class MainActivity : ComponentActivity() {
             )[MainViewModel::class.java]
         mainViewModel.updateNewsApiKey(newsApiKey)
     }
-
-
 
 }

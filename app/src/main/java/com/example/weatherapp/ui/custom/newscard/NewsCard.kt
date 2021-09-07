@@ -24,16 +24,15 @@ fun NewsArticleCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-//            .height(70.dp)
             .clickable { /*TODO: Start a new activity to load the selected News Article*/ }
     ) {
         Row (
             verticalAlignment = Alignment.CenterVertically
         ){
             // Article thumbnail
-
+            val imageURL = article.urlToImage ?: "https://dummyimage.com/200/b8b8b8/000.png&text=No+image+URL+found!"
             Image(
-                painter = rememberImagePainter(article.urlToImage),
+                painter = rememberImagePainter(imageURL),
                 contentDescription = null,
                 contentScale = ContentScale.FillBounds,
                 modifier = Modifier

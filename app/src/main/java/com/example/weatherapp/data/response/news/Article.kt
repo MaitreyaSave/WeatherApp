@@ -4,7 +4,7 @@ import com.squareup.moshi.Json
 
 data class Article(
     @Json(name = "author")
-    val author: String,
+    val author: String?,
     @Json(name = "content")
     val content: String,
     @Json(name = "description")
@@ -18,5 +18,5 @@ data class Article(
     @Json(name = "url")
     val url: String,
     @Json(name = "urlToImage")
-    val urlToImage: String
+    val urlToImage: String?
 )
