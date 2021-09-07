@@ -12,10 +12,10 @@ I have used `Jetpack Compose` (because finally we have a stable build!!!) for it
 There is also a really cool plugin in AndroidStudio called `JSON To Kotlin Class` which helps you to create Data classes from a sample JSON file :D
 
 I noticed that the [5-Days forecast API](https://openweathermap.org/forecast5) call gives forecasts of every 3 hours. So, technically getting the next day's forecast would be to get the 8th element of the list.
-That is why, to get the forecast for the next 3 days I used the `8th, 16th and 24th` element in the list.
-I also noticed that the actual data (min and max temp) that we get from that API call sometimes becomes duplicate (min temp is same as max temp) after the 3rd element.
+That is why, to get the forecast for the next **3 days** I used the `8th, 16th and 24th` element in the list.
+I also noticed that the actual data (min and max temp) that we get from that API call sometimes becomes duplicate (min temp is same as max temp) after the **3rd element**.
 
-So, if you just want the next 3 elements (instead of the 8th, 16th and 24th), please find the variable `jumpMultiplier` and set it to the value <span style="color:red;">1</span>.
+So, if you just want the next 3 elements (instead of the 8th, 16th and 24th), please find the variable `jumpMultiplier` and set it to the value **1**.
 This is just an explanation in case you were wondering as to why the min temp and max temp values are same.
 
 
