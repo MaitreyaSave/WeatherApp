@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import coil.annotation.ExperimentalCoilApi
 import coil.compose.rememberImagePainter
+import com.example.weatherapp.BuildConfig
 import com.example.weatherapp.R
 import com.example.weatherapp.data.NextDayWeather
 import com.example.weatherapp.data.response.currentweather.OpenWeatherApiResponse
@@ -50,8 +51,8 @@ import kotlin.math.roundToInt
 
 class MainActivity : ComponentActivity() {
     companion object {
-        const val openWeatherApiKey = "7fbefd178fabde87e956d38990bbad5f"
-        const val newsApiKey = "0a1812ad68784e2f838d854a52580e4a"
+        const val openWeatherApiKey = BuildConfig.OPEN_WEATHER_API_KEY
+        const val newsApiKey = BuildConfig.NEWS_API_KEY
         const val iconBaseURL = "https://openweathermap.org/img/w/"
         private val TAG = MainActivity::class.java.simpleName
     }
@@ -261,7 +262,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun capitalizeCityName(oldName: String): String {
-        val words = oldName.split(" ")
+        val words = oldName.lowercase(Locale.getDefault()).split(" ")
         val stringBuilder = StringBuilder()
         for (word in words) {
             val updatedWord = word.replaceFirstChar {

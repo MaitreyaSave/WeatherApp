@@ -2,6 +2,9 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
 }
+def localPropertiesFile = rootProject.file("local.properties")
+def localProperties = new Properties()
+localProperties.load(new FileInputStream(localPropertiesFile))
 
 android {
     compileSdk 30
@@ -12,6 +15,9 @@ android {
         targetSdk 30
         versionCode 1
         versionName "1.0"
+
+        buildConfigField "String", "OPEN_WEATHER_API_KEY", localProperties['openWeatherApiKey']
+        buildConfigField "String", "NEWS_API_KEY", localProperties['newsApiKey']
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
