@@ -1,6 +1,7 @@
-package com.example.weatherapp.data
+package com.example.weatherapp.data.services
 
-import com.example.weatherapp.data.response.OpenWeatherApiResponse
+import com.example.weatherapp.data.response.currentweather.OpenWeatherApiResponse
+import com.example.weatherapp.data.response.forecast.ForecastResponse
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import retrofit2.Call
@@ -24,8 +25,9 @@ interface OpenWeatherAPIService {
     }
 
     @GET("data/2.5/weather")
-    // ?q=London&appid={APIKEY}
     fun getCityCurrentWeatherData(@Query("q") query: String, @Query("appid") apiKey: String): Call<OpenWeatherApiResponse>
 
+    @GET("data/2.5/forecast")
+    fun getCityForecastData(@Query("q") query: String, @Query("appid") apiKey: String): Call<ForecastResponse>
 
 }

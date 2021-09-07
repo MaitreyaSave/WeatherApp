@@ -1,4 +1,4 @@
-package com.example.weatherapp.data.response
+package com.example.weatherapp.data.response.currentweather
 
 data class OpenWeatherApiResponse(
     val base: String,

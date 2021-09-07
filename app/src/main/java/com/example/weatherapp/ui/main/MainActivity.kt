@@ -10,7 +10,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -21,12 +20,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.items
 import coil.annotation.ExperimentalCoilApi
 import coil.compose.rememberImagePainter
 import com.example.weatherapp.R
-import com.example.weatherapp.data.OpenWeatherAPIService
-import com.example.weatherapp.data.response.OpenWeatherApiResponse
+import com.example.weatherapp.data.NextDayWeather
+import com.example.weatherapp.data.response.currentweather.OpenWeatherApiResponse
+import com.example.weatherapp.data.response.forecast.ForecastResponse
+import com.example.weatherapp.data.response.news.Article
+import com.example.weatherapp.data.response.news.NewsAPiResponse
+import com.example.weatherapp.data.response.news.Source
+import com.example.weatherapp.data.services.NewsAPIService
+import com.example.weatherapp.data.services.OpenWeatherAPIService
 import com.example.weatherapp.ui.custom.AutoCompleteSearch
+import com.example.weatherapp.ui.custom.newscard.NewsArticleCard
 import com.example.weatherapp.ui.main.viewmodel.MainViewModel
 import com.example.weatherapp.ui.theme.WeatherAppTheme
 import kotlinx.coroutines.GlobalScope
@@ -42,18 +52,38 @@ import kotlin.math.roundToInt
 class MainActivity : ComponentActivity() {
     companion object {
         const val openWeatherApiKey = "7fbefd178fabde87e956d38990bbad5f"
+        const val newsApiKey = "0a1812ad68784e2f838d854a52580e4a"
         const val iconBaseURL = "https://openweathermap.org/img/w/"
     }
 
-    private val mainViewModel = MainViewModel()
+//    private val mainViewModel = MainViewModel()
+    lateinit var mainViewModel: MainViewModel
+
 
     @ExperimentalCoilApi
     @ExperimentalAnimationApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setupViewModel()
         setContent {
             WeatherAppTheme {
                 val itemsList = (0..5).toList()
+                val lazyArticleItems: LazyPagingItems<Article> = mainViewModel.articleListData.collectAsLazyPagingItems()
+
+                val dummySource = Source(
+                    id = "1",
+                    name = "BBC"
+                )
+                val dummyArticle = Article(
+                    author = "Me",
+                    content = "content",
+                    description = "desc",
+                    publishedAt = "today",
+                    source = dummySource,
+                    title = "My Title",
+                    url = "www.google.com",
+                    urlToImage = "https://dummyimage.com/600x400/000/fff.png"
+                )
 
                 Scaffold(
                     topBar = {
@@ -101,7 +131,7 @@ class MainActivity : ComponentActivity() {
                                         ){
                                             Text(
                                                 fontSize = 12.sp,
-                                                text = "Max ${mainViewModel.temp_max.value} / Min ${mainViewModel.temp_min.value}"
+                                                text = "Max ${mainViewModel.tempMax.value} / Min ${mainViewModel.tempMin.value}"
                                             )
                                             Text(
                                                 fontSize = 12.sp,
@@ -125,18 +155,27 @@ class MainActivity : ComponentActivity() {
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(200.dp),
-                                    elevation = 10.dp
+                                        .height(150.dp),
+                                    elevation = 4.dp
                                 ) {
                                     Column(
                                         modifier = Modifier.padding(16.dp)
                                     ) {
-                                        Text( "Next 5 days")
+                                        Text( "Next 3 days")
                                         
-                                        LazyRow(){
-                                            items(itemsList) {
-                                                Text("i:$it")
-                                                Spacer(modifier = Modifier.padding(8.dp))
+                                        Row{
+                                            mainViewModel.dayList.forEach{
+                                                Column {
+                                                    Image(
+                                                        painter = rememberImagePainter(it.iconURL),
+                                                        contentDescription = null,
+                                                        modifier = Modifier
+                                                            .size(70.dp)
+                                                            .padding(4.dp)
+                                                    )
+                                                    Text("${it.maxTemp} / ${it.minTemp}")
+                                                }
+                                                Spacer(modifier = Modifier.padding(16.dp))
                                             }
                                         }
                                         
@@ -151,13 +190,26 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier
                                         .padding(0.dp, 24.dp, 0.dp, 0.dp)
                                 )
+                                Spacer(modifier = Modifier.height(8.dp))
+
                             }
                         }
 
                         // Recycler view of news
 
-                        items(itemsList) {
-                            Text("Item is $it")
+                        item{
+//                           NewsArticleCard(article = null)
+                        }
+
+
+                        items(lazyArticleItems){ article ->
+                            NewsArticleCard(article = article!!)
+                        }
+//                        item{
+//                            NewsArticleCard(article = dummyArticle)
+//                        }
+                        items(mainViewModel.articleList){ article ->
+                            NewsArticleCard(article = article)
                         }
 
                     }
@@ -243,9 +295,38 @@ class MainActivity : ComponentActivity() {
 
     private suspend fun searchOnClick() = coroutineScope{
         //
+//        mainViewModel.updatePager()
+//        Log.d("ttt","pages: ${mainViewModel.articleListData}")
+        //
         val apiService = OpenWeatherAPIService.getOpenWeatherAPIService()
-        val call: Call<OpenWeatherApiResponse> =
-            apiService.getCityCurrentWeatherData(mainViewModel.query, openWeatherApiKey)
+        val call: Call<OpenWeatherApiResponse> = apiService.getCityCurrentWeatherData(mainViewModel.query, openWeatherApiKey)
+        val forecastCall: Call<ForecastResponse> = apiService.getCityForecastData(mainViewModel.query, openWeatherApiKey)
+
+        forecastCall.enqueue(object : Callback<ForecastResponse?> {
+            override fun onResponse(
+                call: Call<ForecastResponse?>,
+                response: Response<ForecastResponse?>
+            ) {
+                val statusCode = response.code()
+                if (statusCode == 404) {
+                    Log.d("ttt", "City not found")
+                } else{
+                    // no-op
+                }
+                val cityForecastResponse: ForecastResponse? = response.body()
+                if (cityForecastResponse != null) {
+                    mapForecastResponseToViewModel(cityForecastResponse)
+                }
+            }
+            override fun onFailure(
+                call: Call<ForecastResponse?>,
+                t: Throwable
+            ) {
+                // Log error here since request failed
+                Log.d("ttt", "Failed $t")
+            }
+        })
+
         call.enqueue(object : Callback<OpenWeatherApiResponse?> {
             override fun onResponse(
                 call: Call<OpenWeatherApiResponse?>,
@@ -260,10 +341,9 @@ class MainActivity : ComponentActivity() {
                 }
                 val cityWeatherResponse: OpenWeatherApiResponse? = response.body()
                 if (cityWeatherResponse != null) {
-                    mapResponseToViewModel(cityWeatherResponse)
+                    mapWeatherResponseToViewModel(cityWeatherResponse)
                 }
             }
-
             override fun onFailure(
                 call: Call<OpenWeatherApiResponse?>,
                 t: Throwable
@@ -274,9 +354,37 @@ class MainActivity : ComponentActivity() {
         })
 
 
+        // News API calls
+        val newsApiService = NewsAPIService.getNewsAPIService()
+
+        val newsCall: Call<NewsAPiResponse> = newsApiService.getArticles(1, 6, mainViewModel.query, newsApiKey)
+        newsCall.enqueue(object : Callback<NewsAPiResponse?> {
+            override fun onResponse(
+                call: Call<NewsAPiResponse?>,
+                response: Response<NewsAPiResponse?>
+            ) {
+                val statusCode = response.code()
+                if (statusCode == 404) {
+                    Log.d("ttt", "City not found")
+                } else{
+                    // no-op
+                }
+                val newsResponse: NewsAPiResponse? = response.body()
+                if (newsResponse != null) {
+                    mapNewsResponseToViewModel(newsResponse)
+                }
+            }
+            override fun onFailure(
+                call: Call<NewsAPiResponse?>,
+                t: Throwable
+            ) {
+                // Log error here since request failed
+                Log.d("ttt", "Failed $t")
+            }
+        })
     }
     
-    private fun mapResponseToViewModel(response: OpenWeatherApiResponse){
+    private fun mapWeatherResponseToViewModel(response: OpenWeatherApiResponse){
         val currentWeather = response.weather[0]
 //        Log.d("ttt", "res: ${currentWeather.description}")
         mainViewModel.cityName.value = capitalizeCityName(mainViewModel.query)
@@ -284,12 +392,49 @@ class MainActivity : ComponentActivity() {
 
         // Convert temperatures to Celsius before updating
         mainViewModel.temp.value = convertKelvinToCelsiusString(response.main.temp)
-        mainViewModel.temp_min.value = convertKelvinToCelsiusString(response.main.temp_min)
-        mainViewModel.temp_max.value = convertKelvinToCelsiusString(response.main.temp_max)
+        mainViewModel.tempMin.value = convertKelvinToCelsiusString(response.main.temp_min)
+        mainViewModel.tempMax.value = convertKelvinToCelsiusString(response.main.temp_max)
+    }
+
+    private fun mapForecastResponseToViewModel(response: ForecastResponse){
+        val allForecastList = response.list
+
+        val jumpMultiplier = 8 // Set this to 1 if you want the next 3 values instead of the next "3 days"
+
+        mainViewModel.dayList.clear()
+        for(i in 1..3){
+            // Get information after every 24 hours (step of 3 hours * 8)
+            val pos = i*jumpMultiplier - 1
+            val iconURL = iconBaseURL + allForecastList[pos].weather[0].icon + ".png"
+            val minTemp = convertKelvinToCelsiusString(allForecastList[pos].main.temp_min)
+            val maxTemp = convertKelvinToCelsiusString(allForecastList[pos].main.temp_max)
+
+            mainViewModel.dayList.add(NextDayWeather(iconURL, minTemp, maxTemp))
+        }
+        Log.d("ttt", "res: ${mainViewModel.dayList.size}")
+
+    }
+
+    private fun mapNewsResponseToViewModel(response: NewsAPiResponse){
+        mainViewModel.articleList.clear()
+        for(article in response.articles){
+            mainViewModel.articleList.add(article)
+        }
     }
 
     private fun convertKelvinToCelsiusString(k:Double): String{
         return (((k - 273.15) * 10.0).roundToInt() / 10.0).toString()
     }
+
+    private fun setupViewModel() {
+        mainViewModel =
+            ViewModelProvider(
+                this,
+                MainViewModelFactory(NewsAPIService.getNewsAPIService())
+            )[MainViewModel::class.java]
+        mainViewModel.updateNewsApiKey(newsApiKey)
+    }
+
+
 
 }
