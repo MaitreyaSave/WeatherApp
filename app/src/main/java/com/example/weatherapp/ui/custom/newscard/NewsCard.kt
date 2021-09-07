@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.annotation.ExperimentalCoilApi
@@ -21,10 +22,15 @@ import com.example.weatherapp.data.response.news.Article
 fun NewsArticleCard(
     article: Article
 ){
+    val focusManager = LocalFocusManager.current
     Card(
+        elevation = 4.dp,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /*TODO: Start a new activity to load the selected News Article*/ }
+            .clickable {
+                focusManager.clearFocus()
+            /*TODO: Start a new activity to load the selected News Article*/
+            }
     ) {
         Row (
             verticalAlignment = Alignment.CenterVertically

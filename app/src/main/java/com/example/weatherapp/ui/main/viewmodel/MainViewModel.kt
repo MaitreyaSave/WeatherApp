@@ -17,9 +17,12 @@ class MainViewModel(
     ) : ViewModel() {
     var query = ""
     var newsApiKey = ""
+
+    //
     lateinit var articleListData: Flow<PagingData<Article>>
+    //
 
-
+    val isValidCity = mutableStateOf(true)
     val cityName = mutableStateOf("")
     val iconURL = mutableStateOf("")
     val temp = mutableStateOf("")

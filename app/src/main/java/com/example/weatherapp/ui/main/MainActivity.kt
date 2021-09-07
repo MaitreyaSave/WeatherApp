@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -17,6 +18,8 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,16 +30,15 @@ import com.example.weatherapp.R
 import com.example.weatherapp.data.NextDayWeather
 import com.example.weatherapp.data.response.currentweather.OpenWeatherApiResponse
 import com.example.weatherapp.data.response.forecast.ForecastResponse
-import com.example.weatherapp.data.response.news.Article
 import com.example.weatherapp.data.response.news.NewsAPiResponse
-import com.example.weatherapp.data.response.news.Source
 import com.example.weatherapp.data.services.NewsAPIService
 import com.example.weatherapp.data.services.OpenWeatherAPIService
 import com.example.weatherapp.ui.custom.AutoCompleteSearch
 import com.example.weatherapp.ui.custom.newscard.NewsArticleCard
 import com.example.weatherapp.ui.main.viewmodel.MainViewModel
 import com.example.weatherapp.ui.theme.WeatherAppTheme
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import retrofit2.Call
@@ -64,26 +66,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             WeatherAppTheme {
 //                val lazyArticleItems: LazyPagingItems<Article> = mainViewModel.articleListData.collectAsLazyPagingItems()
-
-                val dummySource = Source(
-                    id = "1",
-                    name = "BBC"
-                )
-                val dummyArticle = Article(
-                    author = "Me",
-                    content = "content",
-                    description = "desc",
-                    publishedAt = "today",
-                    source = dummySource,
-                    title = "My Title",
-                    url = "www.google.com",
-                    urlToImage = "https://dummyimage.com/600x400/000/fff.png"
-                )
+                val focusManager = LocalFocusManager.current
 
                 Scaffold(
                     topBar = {
                         TopBar(
-                            backgroundColor = MaterialTheme.colors.primary
+                            backgroundColor = Color.White
                         )
                     },
                     backgroundColor = colorResource(R.color.backgroundGrey)
@@ -92,12 +80,14 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(16.dp)
+                            .pointerInput(Unit) {
+                                detectTapGestures {
+                                    focusManager.clearFocus()
+                                }
+                            }
                     ){
                         item {
-                            Column(
-                                // TODO: Check how to remove focus from TextField after clicking on this column
-//                            .focusTarget()
-                            ) {
+                            Column{
 
                                 // Static Text
                                 Text(text = "Today in")
@@ -125,11 +115,11 @@ class MainActivity : ComponentActivity() {
                                             horizontalArrangement = Arrangement.SpaceBetween
                                         ){
                                             Text(
-                                                fontSize = 12.sp,
+                                                fontSize = 14.sp,
                                                 text = "Max ${mainViewModel.tempMax.value} / Min ${mainViewModel.tempMin.value}"
                                             )
                                             Text(
-                                                fontSize = 12.sp,
+                                                fontSize = 14.sp,
                                                 text = "Current ${mainViewModel.temp.value}"
                                             )
                                         }
@@ -158,19 +148,23 @@ class MainActivity : ComponentActivity() {
                                     ) {
                                         Text( "Next 3 days")
                                         
-                                        Row{
+                                        Row(
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ){
                                             mainViewModel.dayList.forEach{
                                                 Column {
                                                     Image(
                                                         painter = rememberImagePainter(it.iconURL),
                                                         contentDescription = null,
                                                         modifier = Modifier
-                                                            .size(70.dp)
-                                                            .padding(4.dp)
+                                                            .size(60.dp)
                                                     )
-                                                    Text("${it.maxTemp} / ${it.minTemp}")
+                                                    Text(
+                                                        text = "${it.maxTemp} / ${it.minTemp}",
+                                                        fontSize = 14.sp
+                                                    )
                                                 }
-                                                Spacer(modifier = Modifier.padding(16.dp))
                                             }
                                         }
                                         
@@ -216,9 +210,11 @@ class MainActivity : ComponentActivity() {
             "Durham"
         )
 
+        val focusManager = LocalFocusManager.current
+
         // TopBar Row
         Surface(
-//        color = backgroundColor,
+        color = backgroundColor,
             modifier = Modifier
                 .fillMaxWidth(),
             elevation = 24.dp
@@ -239,7 +235,8 @@ class MainActivity : ComponentActivity() {
                 // Search Icon Button
                 IconButton(
                     onClick = {
-                        GlobalScope.launch {
+                        focusManager.clearFocus()
+                        CoroutineScope(Dispatchers.Default).launch {
                             searchOnClick()
                         }
 
@@ -290,12 +287,14 @@ class MainActivity : ComponentActivity() {
             ) {
                 val statusCode = response.code()
                 if (statusCode == 404) {
-                    Log.d("ttt", "City not found")
+                    Log.d(TAG, "City not found")
+                    mainViewModel.isValidCity.value = false
                 } else if (statusCode == 200){
                     val cityForecastResponse: ForecastResponse? = response.body()
                     if (cityForecastResponse != null) {
                         mapForecastResponseToViewModel(cityForecastResponse)
                     }
+                    mainViewModel.isValidCity.value = true
                 }
                 else{
                     Log.d(TAG, "Unknown status code: $statusCode")
@@ -319,11 +318,13 @@ class MainActivity : ComponentActivity() {
                 val statusCode = response.code()
                 if (statusCode == 404) {
                     Toast.makeText(baseContext, "Invalid City", Toast.LENGTH_SHORT).show()
+                    mainViewModel.isValidCity.value = false
                 } else if (statusCode == 200){
                     val cityWeatherResponse: OpenWeatherApiResponse? = response.body()
                     if (cityWeatherResponse != null) {
                         mapWeatherResponseToViewModel(cityWeatherResponse)
                     }
+                    mainViewModel.isValidCity.value = true
                 }
                 else{
                     Log.d(TAG, "Unknown status code: $statusCode")
@@ -348,18 +349,21 @@ class MainActivity : ComponentActivity() {
                 call: Call<NewsAPiResponse?>,
                 response: Response<NewsAPiResponse?>
             ) {
-                val statusCode = response.code()
-                if (statusCode == 404) {
-                    Toast.makeText(baseContext, "News not found!!!", Toast.LENGTH_SHORT).show()
 
-                } else if (statusCode == 200){
-                    val newsResponse: NewsAPiResponse? = response.body()
-                    if (newsResponse != null) {
-                        mapNewsResponseToViewModel(newsResponse)
+                // Process news only if the city is a valid city from the Weather Service
+                if(mainViewModel.isValidCity.value) {
+                    val statusCode = response.code()
+                    if (statusCode == 404) {
+                        Toast.makeText(baseContext, "News not found!!!", Toast.LENGTH_SHORT).show()
+
+                    } else if (statusCode == 200) {
+                        val newsResponse: NewsAPiResponse? = response.body()
+                        if (newsResponse != null) {
+                            mapNewsResponseToViewModel(newsResponse)
+                        }
+                    } else {
+                        Log.d(TAG, "Unknown status code: $statusCode")
                     }
-                }
-                else{
-                    Log.d(TAG, "Unknown status code: $statusCode")
                 }
             }
             override fun onFailure(
